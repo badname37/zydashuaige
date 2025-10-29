@@ -110,6 +110,9 @@ let isAdmin = false;
 const groups = ["第一组","第二组","第三组","第四组","第五组","第六组","第七组","第八组","第九组"];
 let data = { announcement:"", scores:{}, details:[] };
 
+// GitHub 上 data.json 地址（替换成你的仓库）
+const GITHUB_JSON_URL = "https://raw.githubusercontent.com/你的用户名/你的仓库名/main/data.json";
+
 // 显示/隐藏
 function showSection(section){
   document.getElementById('homeSection').classList.add('hidden');
@@ -135,7 +138,7 @@ function loadAnnouncement(){
 function saveAnnouncement(){
   if(!isAdmin) return alert("管理员模式下才可修改");
   data.announcement = document.getElementById("announcementInput").value;
-  alert("✅ 公告已保存，可点击下载 data.json 上传 GitHub 更新");
+  saveDataJSON();
   loadAnnouncement();
 }
 
@@ -157,7 +160,7 @@ function saveScores(){
     const inputEl=document.getElementById(g);
     if(inputEl) data.scores[g]=parseInt(inputEl.value)||0;
   });
-  alert("✅ 积分已保存，可点击下载 data.json 上传 GitHub 更新");
+  saveDataJSON();
   loadScores();
 }
 
@@ -193,6 +196,7 @@ function loadDetails(){
 function updateTotalScores(){
   const table=document.getElementById("detailsTable");
   const rows=table.rows;
+  if(rows.length<2) return;
   const totalCol=rows[0].cells.length-1;
   for(let i=1;i<rows.length;i++){
     let sum=0;
@@ -201,102 +205,40 @@ function updateTotalScores(){
       sum+=val;
     }
     rows[i].cells[totalCol].innerText=sum;
-    // 同步积分榜
     const groupName=rows[i].cells[0].innerText;
-    const scoreRow=document.querySelectorAll("#scoreTable tr");
-    scoreRow.forEach(r=>{
-      if(r.cells[0] && r.cells[0].innerText===groupName){
-        if(r.cells[1]) r.cells[1].innerText=sum;
-      }
-    });
+    data.scores[groupName]=sum;
   }
+  loadScores();
 }
 
-function addRow(){
-  if(!isAdmin) return;
-  const table=document.getElementById("detailsTable");
-  const header=table.rows[0];
-  const row=table.insertRow();
-  for(let i=0;i<header.cells.length;i++){
-    const cell=row.insertCell();
-    cell.innerText=i===0?"新小组":"";
-    if(isAdmin) cell.contentEditable="true";
-  }
-  updateTotalScores();
-}
-function addColumn(){
-  if(!isAdmin) return;
-  const table=document.getElementById("detailsTable");
-  const name=prompt("请输入列标题");
-  if(!name) return;
-  const header=table.rows[0];
-  const newTh=header.insertCell(header.cells.length-1);
-  newTh.innerText=name;
-  if(isAdmin) newTh.contentEditable="true";
-  for(let i=1;i<table.rows.length;i++){
-    const c=table.rows[i].insertCell(table.rows[i].cells.length-1);
-    c.innerText="";
-    if(isAdmin) c.contentEditable="true";
-  }
-  updateTotalScores();
-}
-function saveDetails(){
-  if(!isAdmin) return;
-  const table=document.getElementById("detailsTable");
-  const dataArr=[];
-  const headers=[];
-  for(let i=0;i<table.rows[0].cells.length-1;i++) headers.push(table.rows[0].cells[i].innerText);
-  for(let i=1;i<table.rows.length;i++){
-    const row={};
-    for(let j=0;j<headers.length;j++) row[headers[j]]=table.rows[i].cells[j].innerText;
-    dataArr.push(row);
-  }
-  data.details=dataArr;
-  alert("✅ 详细记录已保存，可点击下载 data.json 上传 GitHub 更新");
-  loadDetails();
-}
+// 管理员操作
+function addRow(){ if(!isAdmin) return; const table=document.getElementById("detailsTable"); const header=table.rows[0]; const row=table.insertRow(); for(let i=0;i<header.cells.length;i++){ const cell=row.insertCell(); cell.innerText=i===0?"新小组":""; if(isAdmin) cell.contentEditable="true"; } updateTotalScores(); saveDataJSON(); }
+function addColumn(){ if(!isAdmin) return; const table=document.getElementById("detailsTable"); const name=prompt("请输入列标题"); if(!name) return; const header=table.rows[0]; const newTh=header.insertCell(header.cells.length-1); newTh.innerText=name; if(isAdmin) newTh.contentEditable="true"; for(let i=1;i<table.rows.length;i++){ const c=table.rows[i].insertCell(table.rows[i].cells.length-1); c.innerText=""; if(isAdmin) c.contentEditable="true"; } updateTotalScores(); saveDataJSON(); }
+function saveDetails(){ if(!isAdmin) return; const table=document.getElementById("detailsTable"); const headers=[]; for(let i=0;i<table.rows[0].cells.length-1;i++) headers.push(table.rows[0].cells[i].innerText); const newDetails=[]; for(let i=1;i<table.rows.length;i++){ const rowObj={}; for(let j=0;j<headers.length;j++) rowObj[headers[j]]=table.rows[i].cells[j].innerText; newDetails.push(rowObj); } data.details=newDetails; updateTotalScores(); saveDataJSON(); loadDetails(); }
 
-// 管理员
-function login(){
-  const input=document.getElementById("passwordInput").value;
-  if(input===PASSWORD){
-    isAdmin=true;
-    document.getElementById("statusText").innerText="🟢 管理员模式";
-    document.getElementById("saveScoreBtn").style.display="inline-block";
-    document.getElementById("saveDetailsBtn").style.display="inline-block";
-    document.getElementById("announcementEditor").style.display="block";
-    document.getElementById("detailsAdminBtns").classList.remove("hidden");
-    loadAnnouncement(); loadScores(); loadDetails();
-  } else alert("❌ 密码错误！");
-}
-function logout(){
-  isAdmin=false;
-  document.getElementById("statusText").innerText="🔒 当前为查看模式";
-  document.getElementById("saveScoreBtn").style.display="none";
-  document.getElementById("saveDetailsBtn").style.display="none";
-  document.getElementById("announcementEditor").style.display="none";
-  document.getElementById("detailsAdminBtns").classList.add("hidden");
-  loadAnnouncement(); loadScores(); loadDetails();
-}
+// 登录登出
+function login(){ const input=document.getElementById("passwordInput").value; if(input===PASSWORD){ isAdmin=true; document.getElementById("statusText").innerText="🟢 管理员模式"; document.getElementById("saveScoreBtn").style.display="inline-block"; document.getElementById("saveDetailsBtn").style.display="inline-block"; document.getElementById("announcementEditor").style.display="block"; document.getElementById("detailsAdminBtns").classList.remove("hidden"); loadScores(); loadDetails(); loadAnnouncement(); } else alert("❌ 密码错误！"); }
+function logout(){ isAdmin=false; document.getElementById("statusText").innerText="🔒 当前为查看模式"; document.getElementById("saveScoreBtn").style.display="none"; document.getElementById("saveDetailsBtn").style.display="none"; document.getElementById("announcementEditor").style.display="none"; document.getElementById("detailsAdminBtns").classList.add("hidden"); loadScores(); loadDetails(); loadAnnouncement(); }
 
-// 下载 data.json
-function downloadJSON(){
-  if(!isAdmin) return alert("管理员模式下才可操作");
-  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
-  const url = URL.createObjectURL(blob);
-  const a=document.createElement("a");
-  a.href=url;
-  a.download="data.json";
-  a.click();
-  URL.revokeObjectURL(url);
-  alert("✅ data.json 已生成，可上传到 GitHub 同步更新");
-}
+// 生成 JSON 下载
+function downloadJSON(){ saveDataJSON(); }
+function saveDataJSON(){ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob); const a=document.createElement("a"); a.href=url; a.download="data.json"; a.click(); URL.revokeObjectURL(url); alert("✅ 最新 data.json 已生成，请上传 GitHub 覆盖原文件"); }
 
-// 初始化
-loadDefaultData();
-loadAnnouncement();
-loadScores();
-loadDetails();
+// 自动拉取 GitHub 最新数据
+async function fetchLatestData(){
+  try{
+    const response = await fetch(GITHUB_JSON_URL + "?t="+new Date().getTime());
+    if(!response.ok) throw new Error("无法获取最新数据");
+    const latest = await response.json();
+    data = latest;
+    loadDefaultData();
+    loadAnnouncement();
+    loadScores();
+    loadDetails();
+  } catch(err){ console.log("获取最新 data.json 出错:", err); }
+}
+setInterval(fetchLatestData,10000);
+fetchLatestData();
 </script>
 </body>
 </html>
