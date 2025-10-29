@@ -10,13 +10,13 @@ header { text-align:center; padding:30px 10px; background:#142857; }
 header h1 { margin:0; font-size:2em; }
 header p { margin:5px 0; color:#a9c4ff; }
 
-/* 容器改为百分比自适应 */
+/* 容器自适应 */
 .container { max-width:95%; width:95%; margin:0 auto; padding:20px; }
 
 section { background-color:#1b2c52; border-radius:12px; padding:20px; margin-bottom:25px; box-shadow:0 0 10px rgba(255,255,255,0.05); }
 h2 { border-bottom:2px solid #3f64b5; padding-bottom:5px; margin-bottom:15px; }
 
-/* 表格响应式 */
+/* 表格基础样式 */
 table { border-collapse:collapse; width:100%; }
 th, td { border:1px solid #324a7a; padding:8px; text-align:center; min-width:80px; }
 th { background-color:#223a70; cursor:pointer; }
@@ -33,9 +33,9 @@ input[type=number], input[type=text] { width:100%; text-align:center; border-rad
 .hidden { display:none; }
 #announcementBox { background:#3f64b5; padding:10px; border-radius:6px; }
 
-/* 积分详细记录表格可横向滚动 */
+/* 积分详细记录表格外层可滚动 */
 #detailsSection { overflow-x:auto; }
-#detailsTable { min-width:800px; table-layout: fixed; border-collapse: collapse; }
+#detailsTable { table-layout:auto; width:max-content; border-collapse: collapse; }
 #detailsTable th:first-child,#detailsTable td:first-child,
 #detailsTable th:last-child,#detailsTable td:last-child{
   position: sticky;
@@ -50,9 +50,16 @@ input[type=number], input[type=text] { width:100%; text-align:center; border-rad
   header h1 { font-size:1.5em; }
   header p { font-size:0.9em; }
   section { padding:15px; }
-  th, td { padding:6px; font-size:0.9em; }
+  th, td { padding:4px; font-size:0.8em; }
   .button { padding:6px 12px; font-size:0.9em; }
   .container { width:95%; padding:10px; }
+  
+  /* 表格在手机端可左右滑动且取消 sticky */
+  #detailsTable { width:auto; min-width:100%; }
+  #detailsTable th:first-child,
+  #detailsTable td:first-child,
+  #detailsTable th:last-child,
+  #detailsTable td:last-child { position: static; }
 }
 </style>
 </head>
@@ -207,7 +214,6 @@ function updateTotalScores(){
       sum+=val;
     }
     rows[i].cells[totalCol].innerText=sum;
-    // 同步积分榜
     const groupName=rows[i].cells[0].innerText;
     const scoreRow=document.querySelectorAll("#scoreTable tr");
     scoreRow.forEach(r=>{
@@ -272,7 +278,7 @@ function login(){
     document.getElementById("saveScoreBtn").style.display="inline-block";
     document.getElementById("saveDetailsBtn").style.display="inline-block";
     document.getElementById("announcementEditor").style.display="block";
-    document.getElementById("detailsAdminBtns").classList.remove("hidden");
+    document.getElementById("detailsAdminBtns").classList.remove('hidden');
     loadScores(); loadDetails(); loadAnnouncement();
   } else alert("❌ 密码错误！");
 }
@@ -283,7 +289,7 @@ function logout(){
   document.getElementById("saveScoreBtn").style.display="none";
   document.getElementById("saveDetailsBtn").style.display="none";
   document.getElementById("announcementEditor").style.display="none";
-  document.getElementById("detailsAdminBtns").classList.add("hidden");
+  document.getElementById("detailsAdminBtns").classList.add('hidden');
   loadScores(); loadDetails(); loadAnnouncement();
 }
 
