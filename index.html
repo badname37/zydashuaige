@@ -197,6 +197,8 @@ function updateTotalScores(){
   const table=document.getElementById("detailsTable");
   const rows=table.rows;
   const totalCol=rows[0].cells.length-1;
+  const newDetails = [];
+
   for(let i=1;i<rows.length;i++){
     let sum=0;
     for(let j=1;j<totalCol;j++){
@@ -204,22 +206,33 @@ function updateTotalScores(){
       sum+=val;
     }
     rows[i].cells[totalCol].innerText=sum;
-    // 同步积分榜
-    const groupName=rows[i].cells[0].innerText;
-    const scoreRow=document.querySelectorAll("#scoreTable tr");
+
+    const groupName = rows[i].cells[0].innerText;
+    const scoreRow = document.querySelectorAll("#scoreTable tr");
     scoreRow.forEach(r=>{
-      if(r.cells[0] && r.cells[0].innerText===groupName){
+      if(r.cells[0] && r.cells[0].innerText === groupName){
         if(r.cells[1]){
-          if(!isAdmin) r.cells[1].innerText=sum;
+          if(!isAdmin) r.cells[1].innerText = sum;
           else {
             const inputEl = r.cells[1].querySelector("input");
-            if(inputEl) inputEl.value=sum;
-            else r.cells[1].innerText=sum;
+            if(inputEl) inputEl.value = sum;
+            else r.cells[1].innerText = sum;
           }
         }
       }
     });
+
+    // 构建 data.details
+    const rowData = {};
+    for(let j=0;j<totalCol;j++){
+      rowData[rows[0].cells[j].innerText] = rows[i].cells[j].innerText;
+    }
+    newDetails.push(rowData);
+
+    // 同步 data.scores
+    data.scores[groupName] = sum;
   }
+  data.details = newDetails; // 更新 data.details
 }
 
 function addRow(){
@@ -232,42 +245,30 @@ function addRow(){
     if(i===0) cell.innerText="新小组";
     else if(i===header.cells.length-1) cell.innerText=0;
     else cell.innerText="";
-    if(isAdmin && i!==0 && i!==header.cells.length-1) cell.contentEditable=true;
+    if(isAdmin && i!==0 && i!==header.cells.length-1) cell.contentEditable = true;
   }
   updateTotalScores();
 }
-
 function addColumn(){
   if(!isAdmin) return;
   const table=document.getElementById("detailsTable");
-  const name = prompt("请输入列标题");
+  const name=prompt("请输入列标题");
   if(!name) return;
-  const header = table.rows[0];
-  const insertIndex = header.cells.length - 1; // 总分前插入
+  const header=table.rows[0];
+  const insertIndex = header.cells.length-1; // 插入到总分前
   const newTh = header.insertCell(insertIndex);
-  newTh.innerText = name;
-  newTh.contentEditable = true;
-
+  newTh.innerText=name;
+  if(isAdmin) newTh.contentEditable=true;
   for(let i=1;i<table.rows.length;i++){
-    const c = table.rows[i].insertCell(insertIndex);
-    c.innerText = "";
-    c.contentEditable = true;
+    const c=table.rows[i].insertCell(insertIndex);
+    c.innerText="";
+    if(isAdmin) c.contentEditable = true;
   }
   updateTotalScores();
 }
-
 function saveDetails(){
   if(!isAdmin) return;
-  const table=document.getElementById("detailsTable");
-  const dataArr=[];
-  const headers=[];
-  for(let i=0;i<table.rows[0].cells.length-1;i++) headers.push(table.rows[0].cells[i].innerText);
-  for(let i=1;i<table.rows.length;i++){
-    const row={};
-    for(let j=0;j<headers.length;j++) row[headers[j]]=table.rows[i].cells[j].innerText;
-    dataArr.push(row);
-  }
-  data.details=dataArr;
+  updateTotalScores();
   alert("✅ 详细记录已保存，可点击下载 data.json 上传 GitHub 更新");
   loadDetails();
 }
