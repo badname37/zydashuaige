@@ -30,11 +30,13 @@ input[type=number], input[type=text] { width:100%; text-align:center; border-rad
   position: sticky;
   left:0;
   background:#223a70;
-  z-index:1;
+  z-index:2;
 }
 #detailsTable th:last-child,#detailsTable td:last-child{
-  position: static; /* 不再 sticky，避免手机端霸占中间 */
+  position: sticky;
+  right:0;
   background:#223a70;
+  z-index:1;
 }
 </style>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -168,24 +170,25 @@ function loadDetails(){
   const stored = data.details;
 
   const header=table.insertRow();
-  const cols=Object.keys(stored[0] || {小组:""});
+  const allKeys = Object.keys(stored[0] || {小组:""});
+  const cols = ["小组"];
+  allKeys.forEach(k=>{ if(k!=="小组") cols.push(k); });
   cols.push("总分");
   cols.forEach(c=>{
     const th=document.createElement("th");
     th.innerText=c;
-    if(isAdmin) th.contentEditable="true";
+    if(isAdmin && c!=="小组" && c!=="总分") th.contentEditable = true;
     header.appendChild(th);
   });
 
   stored.forEach(r=>{
     const row=table.insertRow();
-    Object.keys(r).forEach(k=>{
+    cols.forEach(c=>{
       const cell=row.insertCell();
-      cell.innerText=r[k]||"";
-      if(isAdmin) cell.contentEditable="true";
+      if(c==="总分") cell.innerText=0;
+      else cell.innerText = r[c]||"";
+      if(isAdmin && c!=="小组" && c!=="总分") cell.contentEditable = true;
     });
-    const totalCell=row.insertCell();
-    totalCell.innerText=0;
   });
   updateTotalScores();
 }
@@ -206,7 +209,14 @@ function updateTotalScores(){
     const scoreRow=document.querySelectorAll("#scoreTable tr");
     scoreRow.forEach(r=>{
       if(r.cells[0] && r.cells[0].innerText===groupName){
-        if(r.cells[1]) r.cells[1].innerText=sum;
+        if(r.cells[1]){
+          if(!isAdmin) r.cells[1].innerText=sum;
+          else {
+            const inputEl = r.cells[1].querySelector("input");
+            if(inputEl) inputEl.value=sum;
+            else r.cells[1].innerText=sum;
+          }
+        }
       }
     });
   }
@@ -219,27 +229,33 @@ function addRow(){
   const row=table.insertRow();
   for(let i=0;i<header.cells.length;i++){
     const cell=row.insertCell();
-    cell.innerText=i===0?"新小组":"";
-    if(isAdmin) cell.contentEditable="true";
+    if(i===0) cell.innerText="新小组";
+    else if(i===header.cells.length-1) cell.innerText=0;
+    else cell.innerText="";
+    if(isAdmin && i!==0 && i!==header.cells.length-1) cell.contentEditable=true;
   }
   updateTotalScores();
 }
+
 function addColumn(){
   if(!isAdmin) return;
   const table=document.getElementById("detailsTable");
-  const name=prompt("请输入列标题");
+  const name = prompt("请输入列标题");
   if(!name) return;
-  const header=table.rows[0];
-  const newTh=header.insertCell(header.cells.length-1);
-  newTh.innerText=name;
-  if(isAdmin) newTh.contentEditable="true";
+  const header = table.rows[0];
+  const insertIndex = header.cells.length - 1; // 总分前插入
+  const newTh = header.insertCell(insertIndex);
+  newTh.innerText = name;
+  newTh.contentEditable = true;
+
   for(let i=1;i<table.rows.length;i++){
-    const c=table.rows[i].insertCell(table.rows[i].cells.length-1);
-    c.innerText="";
-    if(isAdmin) c.contentEditable="true";
+    const c = table.rows[i].insertCell(insertIndex);
+    c.innerText = "";
+    c.contentEditable = true;
   }
   updateTotalScores();
 }
+
 function saveDetails(){
   if(!isAdmin) return;
   const table=document.getElementById("detailsTable");
