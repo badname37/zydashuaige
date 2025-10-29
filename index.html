@@ -126,6 +126,14 @@ input[type=number], input[type=text] { width:100%; text-align:center; border-rad
 </section>
 
 <script>
+// ----------------- 自动刷新版本号 -----------------
+const VERSION = Date.now();
+if(!window.location.href.includes("v=")){
+    const newUrl = window.location.href + (window.location.href.includes("?") ? "&" : "?") + "v=" + VERSION;
+    window.location.replace(newUrl);
+}
+// -------------------------------------------------
+
 const PASSWORD = "2026";
 let isAdmin = false;
 const groups = ["第一组","第二组","第三组","第四组","第五组","第六组","第七组","第八组","第九组"];
@@ -295,5 +303,6 @@ function logout(){
 
 loadScores(); loadDetails(); loadAnnouncement();
 </script>
+
 </body>
 </html>
