@@ -24,19 +24,21 @@ input[type=number], input[type=text] { width:100%; text-align:center; border-rad
 .nav-buttons .button { margin:0 5px; }
 .hidden { display:none; }
 #announcementBox { background:#3f64b5; padding:10px; border-radius:6px; word-break: break-word; }
-#detailsSection { overflow-x:auto; }
-#detailsTable { min-width:800px; table-layout:auto; border-collapse: collapse; }
-#detailsTable th:first-child,#detailsTable td:first-child{
-  position: sticky;
-  left:0;
-  background:#223a70;
-  z-index:2;
+
+/* ✅ 改为可滑动版本，移除固定列 */
+#detailsSection {
+  overflow-x: auto;
 }
-#detailsTable th:last-child,#detailsTable td:last-child{
-  position: sticky;
-  right:0;
-  background:#223a70;
-  z-index:1;
+#detailsTable {
+  min-width: 800px;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+
+img.responsive-img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
 }
 </style>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -73,15 +75,7 @@ input[type=number], input[type=text] { width:100%; text-align:center; border-rad
   </div>
 
   <h2>📅 时间表</h2>
-  <table>
-    <tr><th>日期</th><th>时间</th><th>活动内容</th></tr>
-    <tr><td>Day 1</td><td>09:00 - 12:00</td><td>破冰游戏 & 小组介绍</td></tr>
-    <tr><td>Day 1</td><td>14:00 - 17:00</td><td>团队挑战赛</td></tr>
-    <tr><td>Day 2</td><td>09:30 - 11:30</td><td>主题工作坊</td></tr>
-    <tr><td>Day 2</td><td>15:00 - 17:00</td><td>创造力竞赛</td></tr>
-    <tr><td>Day 3</td><td>09:00 - 11:00</td><td>圣经密室逃脱</td></tr>
-    <tr><td>Day 3</td><td>14:00 - 16:30</td><td>总结 & 分享会</td></tr>
-  </table>
+  <img src="Time.jpg" alt="冬令营时间表" class="responsive-img">
 
   <h2>⚠️ 注意事项</h2>
   <ul>
@@ -98,7 +92,9 @@ input[type=number], input[type=text] { width:100%; text-align:center; border-rad
 </section>
 
 <section id="detailsSection" class="hidden">
-  <table id="detailsTable"></table>
+  <div style="overflow-x:auto;">
+    <table id="detailsTable"></table>
+  </div>
   <div style="margin-top:10px;" id="detailsAdminBtns" class="hidden">
     <button class="button" onclick="addRow()">➕ 添加行</button>
     <button class="button" onclick="addColumn()">➕ 添加列</button>
@@ -107,7 +103,6 @@ input[type=number], input[type=text] { width:100%; text-align:center; border-rad
 </section>
 
 <script>
-// ========= 🌐 自动从 GitHub 获取 data.json =========
 const DATA_URL = "https://raw.githubusercontent.com/badname37/zydashuaige/main/data.json";
 
 async function loadRemoteData() {
@@ -129,21 +124,18 @@ async function loadRemoteData() {
     loadDetails();
   }
 }
-// ================================================
 
 const PASSWORD = "2026";
 let isAdmin = false;
 const groups = ["第一组","第二组","第三组","第四组","第五组","第六组","第七组","第八组","第九组"];
 let data = { announcement:"", scores:{}, details:[] };
 
-// 显示/隐藏
 function showSection(section){
   document.getElementById('homeSection').classList.add('hidden');
   document.getElementById('detailsSection').classList.add('hidden');
   document.getElementById(section+'Section').classList.remove('hidden');
 }
 
-// 加载默认数据
 function loadDefaultData(){
   groups.forEach(g=>{
     if(!(g in data.scores)) data.scores[g]=0;
@@ -153,7 +145,6 @@ function loadDefaultData(){
   }
 }
 
-// 公告
 function loadAnnouncement(){
   document.getElementById("announcementBox").innerText = data.announcement || "暂无公告";
   if(isAdmin) document.getElementById("announcementInput").value = data.announcement || "";
@@ -165,7 +156,6 @@ function saveAnnouncement(){
   loadAnnouncement();
 }
 
-// 积分榜
 function loadScores(){
   const table=document.getElementById("scoreTable");
   table.innerHTML="<tr><th>组别</th><th>积分</th></tr>";
@@ -187,7 +177,6 @@ function saveScores(){
   loadScores();
 }
 
-// 详细记录
 function loadDetails(){
   const table=document.getElementById("detailsTable");
   table.innerHTML="";
@@ -295,7 +284,6 @@ function saveDetails(){
   loadDetails();
 }
 
-// 管理员
 function login(){
   const input=document.getElementById("passwordInput").value;
   if(input===PASSWORD){
@@ -318,7 +306,6 @@ function logout(){
   loadAnnouncement(); loadScores(); loadDetails();
 }
 
-// 下载 data.json
 function downloadJSON(){
   if(!isAdmin) return alert("管理员模式下才可操作");
   const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
@@ -331,7 +318,6 @@ function downloadJSON(){
   alert("✅ data.json 已生成，可上传到 GitHub 同步更新");
 }
 
-// 初始化：从 GitHub 加载
 loadRemoteData();
 </script>
 </body>
