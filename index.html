@@ -107,6 +107,30 @@ input[type=number], input[type=text] { width:100%; text-align:center; border-rad
 </section>
 
 <script>
+// ========= 🌐 自动从 GitHub 获取 data.json =========
+const DATA_URL = "https://raw.githubusercontent.com/badname37/zydashuaige/main/data.json";
+
+async function loadRemoteData() {
+  try {
+    const res = await fetch(DATA_URL + '?t=' + new Date().getTime());
+    if (!res.ok) throw new Error("网络错误");
+    const json = await res.json();
+    data = json;
+    console.log("✅ 已从 GitHub 加载最新 data.json");
+    loadDefaultData();
+    loadAnnouncement();
+    loadScores();
+    loadDetails();
+  } catch (e) {
+    console.error("❌ 加载 data.json 失败，使用默认数据", e);
+    loadDefaultData();
+    loadAnnouncement();
+    loadScores();
+    loadDetails();
+  }
+}
+// ================================================
+
 const PASSWORD = "2026";
 let isAdmin = false;
 const groups = ["第一组","第二组","第三组","第四组","第五组","第六组","第七组","第八组","第九组"];
@@ -222,17 +246,15 @@ function updateTotalScores(){
       }
     });
 
-    // 构建 data.details
     const rowData = {};
     for(let j=0;j<totalCol;j++){
       rowData[rows[0].cells[j].innerText] = rows[i].cells[j].innerText;
     }
     newDetails.push(rowData);
 
-    // 同步 data.scores
     data.scores[groupName] = sum;
   }
-  data.details = newDetails; // 更新 data.details
+  data.details = newDetails;
 }
 
 function addRow(){
@@ -255,7 +277,7 @@ function addColumn(){
   const name=prompt("请输入列标题");
   if(!name) return;
   const header=table.rows[0];
-  const insertIndex = header.cells.length-1; // 插入到总分前
+  const insertIndex = header.cells.length-1;
   const newTh = header.insertCell(insertIndex);
   newTh.innerText=name;
   if(isAdmin) newTh.contentEditable=true;
@@ -309,11 +331,8 @@ function downloadJSON(){
   alert("✅ data.json 已生成，可上传到 GitHub 同步更新");
 }
 
-// 初始化
-loadDefaultData();
-loadAnnouncement();
-loadScores();
-loadDetails();
+// 初始化：从 GitHub 加载
+loadRemoteData();
 </script>
 </body>
 </html>
